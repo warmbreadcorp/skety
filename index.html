@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<!-- skety © 2026 WarmBread Corp. All rights reserved. 무단 복제·배포·역설계를 금지합니다. -->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>skety — 영상 소스 스케치</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6cff' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M3.5 12c2.8-4.2 5.7-4.2 8.5 0s5.7 4.2 8.5 0'/%3E%3C/svg%3E">
+<style>:root{
+--bg:#131316; --panel:#19191d; --hover:#232329; --active:#2a2a31; --line:#26262c;
+--text:#ececf0; --dim:#8f929c; --faint:#5c5f68;
+--accent:#5b6cff; --accent-dim:#1d2140; --accent-text:#ffffff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+height:100%; overflow:hidden;
+-webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+}
+body{
+background:var(--bg); color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif;
+display:flex; flex-direction:column; touch-action:manipulation; font-size:13px;
+}
+svg.ic{
+width:16px; height:16px; flex:none;
+fill:none; stroke:currentColor; stroke-width:1.8;
+stroke-linecap:round; stroke-linejoin:round;
+}
+header{
+display:flex; align-items:center; gap:4px;
+padding:0 14px; height:52px; background:var(--panel); border-bottom:1px solid var(--line);
+flex:none;
+}
+.logo{display:flex; align-items:center; gap:2px; margin-right:12px}
+.logo-glyph{width:20px; height:20px; flex:none}
+.logo-word{
+font-weight:500; font-size:16px; letter-spacing:0; color:var(--text);
+}
+.spacer{flex:1}
+select{
+appearance:none; -webkit-appearance:none;
+background:var(--hover) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238f929c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") no-repeat right 9px center / 12px;
+color:var(--text); border:none;
+border-radius:8px; padding:8px 28px 8px 11px; font-size:12.5px; outline:none; cursor:pointer;
+}
+select:hover{background-color:var(--active)}
+.btn{
+background:transparent; color:var(--text); border:none;
+border-radius:8px; padding:8px 11px; font-size:12.5px; cursor:pointer;
+display:inline-flex; align-items:center; gap:7px; user-select:none;
+}
+.btn:hover{background:var(--hover)}
+.btn:active{background:var(--active)}
+.btn:disabled{opacity:0.3; cursor:default; background:transparent}
+.btn.primary{background:var(--accent); color:var(--accent-text); font-weight:600; margin-left:6px}
+.btn.primary:hover{background:#639aff}
+.btn.small{padding:6px 10px; font-size:12px; border:1px solid var(--line)}
+main{flex:1; display:flex; min-height:0}
+#canvasArea{flex:1; position:relative; display:flex; min-width:0; min-height:0}
+#canvasWrap{
+flex:1; display:flex; padding:16px; min-width:0; min-height:0; overflow:auto;
+}
+#stage{
+position:relative; margin:auto; flex:none; border-radius:4px; overflow:hidden;
+box-shadow:0 4px 24px rgba(0,0,0,0.45);
+background:
+repeating-conic-gradient(#303036 0% 25%, #232329 0% 50%) 0 0 / 20px 20px;
+}
+#stage.bg-black{background:#0a0a0a}
+#stage.bg-white{background:#ffffff}
+#stage canvas, #layerStack{position:absolute; inset:0; width:100%; height:100%}
+#layerStack canvas{position:absolute; inset:0; width:100%; height:100%}
+#overlay{touch-action:none}
+#guides{position:absolute; inset:0; pointer-events:none; display:none}
+.gz{position:absolute; background:rgba(235,80,90,0.11)}
+.gz-top{left:0; right:0; top:0; height:11%}
+.gz-bottom{left:0; right:0; bottom:0; height:30%}
+.gz-right{right:0; top:11%; bottom:30%; width:14%}
+.gz span, .gz-safe span{
+position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+font-size:10px; font-weight:500; color:rgba(255,160,165,0.5);
+text-align:center; padding:6px; text-shadow:0 1px 2px rgba(0,0,0,0.45);
+}
+.gz-right span{writing-mode:vertical-rl}
+.gz-safe{
+position:absolute; top:11%; bottom:30%; left:0; right:14%;
+border:1px dashed rgba(110,220,140,0.4);
+}
+.gz-safe span{
+color:rgba(110,220,140,0.55); align-items:flex-end; justify-content:center;
+padding-bottom:10px;
+}
+#refBadge{
+position:absolute; top:8px; left:8px; z-index:5; display:none;
+background:rgba(19,19,22,0.75); color:var(--dim); font-size:10.5px;
+padding:4px 8px; border-radius:6px; pointer-events:none;
+border:1px solid rgba(255,255,255,0.08);
+}
+#floatCtrl{
+position:absolute; left:14px; bottom:14px; z-index:6;
+display:flex; align-items:center; gap:1px;
+background:rgba(19,19,22,0.88); border:1px solid var(--line); border-radius:10px;
+padding:3px; backdrop-filter:blur(8px);
+}
+#floatCtrl button{
+background:transparent; border:none; color:var(--dim); font-size:12px;
+padding:5px 8px; border-radius:7px; cursor:pointer; min-width:26px;
+}
+#floatCtrl button:hover{background:var(--hover); color:var(--text)}
+#floatCtrl button.on{color:var(--accent)}
+#zoomLabel{font-variant-numeric:tabular-nums; min-width:44px}
+.fc-sep{width:1px; height:16px; background:var(--line); margin:0 3px}
+#cursorRing{
+position:fixed; display:none; pointer-events:none; z-index:50;
+border:1px solid rgba(255,255,255,0.9); border-radius:50%;
+box-shadow:0 0 0 1px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.5);
+}
+#mobileBar{display:none}
+#sheetScrim{display:none}
+#tools{
+flex:none; width:248px; background:var(--panel); border-left:1px solid var(--line);
+padding:2px 14px 14px; display:flex; flex-direction:column; overflow-y:auto;
+}
+#tools > section, #tools > details{padding:13px 0; border-bottom:1px solid var(--line)}
+#tools > :last-child{border-bottom:none}
+details.acc summary{
+list-style:none; cursor:pointer; display:flex; align-items:center; gap:7px;
+font-size:11px; color:var(--dim); font-weight:700; letter-spacing:1.2px;
+text-transform:uppercase; user-select:none;
+}
+details.acc summary::-webkit-details-marker{display:none}
+details.acc summary::before{
+content:""; width:6px; height:6px; flex:none;
+border-right:1.5px solid var(--faint); border-bottom:1.5px solid var(--faint);
+transform:rotate(-45deg); transition:transform 0.15s;
+}
+details.acc[open] summary::before{transform:rotate(45deg)}
+details.acc summary:hover{color:var(--text)}
+.acc-body{margin-top:12px}
+.acc-hint{margin-left:auto; font-weight:500; letter-spacing:0; text-transform:none; color:var(--faint)}
+.mini{font-size:11px; color:var(--dim); width:38px; flex:none}
+.seg{display:flex; background:var(--hover); border-radius:8px; padding:2px; gap:2px; flex:1}
+.seg button{
+flex:1; background:transparent; border:none; color:var(--dim); font-size:11.5px;
+padding:5px 0; border-radius:6px; cursor:pointer;
+}
+.seg button.on{background:var(--active); color:var(--text)}
+.seg-row{display:flex; align-items:center; gap:8px; margin-top:10px}
+.group-label{
+font-size:10px; color:var(--faint); font-weight:700; letter-spacing:1.4px;
+margin-bottom:10px; text-transform:uppercase;
+}
+.tool-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:4px}
+.tool{
+border-radius:9px; padding:8px 0 7px; text-align:center; cursor:pointer; font-size:10px;
+display:flex; flex-direction:column; align-items:center; gap:5px; color:var(--dim); user-select:none;
+}
+.tool:hover{background:var(--hover); color:var(--text)}
+.tool.active{background:var(--accent-dim); color:var(--accent)}
+.tool svg.ic{width:19px; height:19px}
+.slider-row{display:flex; align-items:center; gap:10px}
+.slider-row output{font-size:12px; color:var(--dim); width:36px; text-align:right; font-variant-numeric:tabular-nums}
+input[type=range]{
+-webkit-appearance:none; appearance:none; flex:1; height:24px;
+background:transparent; cursor:pointer; --fill:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{
+height:4px; border-radius:2px;
+background:linear-gradient(to right, var(--accent) var(--fill), #34353c var(--fill));
+}
+input[type=range]::-webkit-slider-thumb{
+-webkit-appearance:none; width:14px; height:14px; border-radius:50%;
+background:#fff; margin-top:-5px; box-shadow:0 1px 4px rgba(0,0,0,0.4);
+transition:transform 0.12s;
+}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type=range]::-moz-range-track{height:4px; border-radius:2px; background:#34353c}
+input[type=range]::-moz-range-progress{height:4px; border-radius:2px; background:var(--accent)}
+input[type=range]::-moz-range-thumb{width:14px; height:14px; border:none; border-radius:50%; background:#fff}
+.swatches{display:grid; grid-template-columns:repeat(6,1fr); gap:7px}
+.swatch{
+aspect-ratio:1; border-radius:50%; cursor:pointer;
+box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12);
+}
+.swatch:hover{transform:scale(1.1)}
+.swatch.active{box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 0 2px var(--panel), 0 0 0 3.5px var(--accent)}
+.color-custom{display:flex; align-items:center; gap:9px; margin-top:11px}
+.color-custom input[type=color]{
+-webkit-appearance:none; appearance:none; width:24px; height:24px; border-radius:50%;
+border:none; padding:0; cursor:pointer;
+background:conic-gradient(#ff5959,#ffd60a,#6ede6e,#59d7ff,#6b7bff,#e06bff,#ff5959);
+}
+.color-custom input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.color-custom input[type=color]::-webkit-color-swatch{border:none; border-radius:50%; opacity:0}
+.color-custom span{font-size:12px; color:var(--dim)}
+.hint{font-size:11px; color:var(--faint); line-height:1.6}
+#saveState{font-size:11px; color:var(--dim); text-align:center}
+#saveState.on{color:#6fbf73}
+#layerList{display:flex; flex-direction:column; gap:3px; margin-bottom:9px}
+.layer-item{
+display:flex; align-items:center; gap:8px; border-radius:8px;
+padding:6px 8px; cursor:pointer; user-select:none; font-size:12.5px; color:var(--dim);
+}
+.layer-item:hover{background:var(--hover)}
+.layer-item.active{background:var(--accent-dim); color:var(--text)}
+.layer-item .eye{display:flex; cursor:pointer; color:var(--dim); padding:2px}
+.layer-item .eye:hover{color:var(--text)}
+.layer-item .eye.off{color:var(--faint)}
+.layer-item .eye svg.ic{width:15px; height:15px}
+.layer-item .name{flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis}
+.layer-item .thumb{
+width:32px; height:20px; border-radius:4px; flex:none;
+background:repeating-conic-gradient(#303036 0% 25%, #232329 0% 50%) 0 0 / 8px 8px;
+border:1px solid var(--line); overflow:hidden;
+}
+.layer-item .thumb canvas{width:100%; height:100%; display:block}
+.layer-actions{display:flex; gap:6px}
+.checkbox-row{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--dim); margin-top:8px; cursor:pointer; user-select:none}
+.checkbox-row input{
+appearance:none; -webkit-appearance:none; width:32px; height:19px; border-radius:10px;
+background:#34353c; position:relative; cursor:pointer; transition:background 0.15s; flex:none;
+}
+.checkbox-row input::after{
+content:""; position:absolute; top:2.5px; left:2.5px; width:14px; height:14px;
+border-radius:50%; background:#fff; transition:left 0.15s;
+}
+.checkbox-row input:checked{background:var(--accent)}
+.checkbox-row input:checked::after{left:15.5px}
+.ref-controls{display:none; flex-direction:column; gap:8px; margin-top:10px}
+.ref-controls.show{display:flex}
+@media (max-width:760px){
+header{padding:0 8px; gap:2px}
+.logo-word{display:none}
+.logo{margin-right:4px}
+.btn .label{display:none}
+.btn{padding:13px}
+select{max-width:136px; font-size:11px; padding:10px 26px 10px 10px}
+main{flex-direction:column}
+#canvasWrap{padding:8px}
+#tools{
+position:fixed; left:0; right:0; bottom:0; z-index:40;
+width:100%; max-height:72vh; overflow-y:auto;
+border-left:none; border-top:1px solid var(--line);
+border-radius:16px 16px 0 0;
+padding:6px 18px calc(18px + env(safe-area-inset-bottom));
+transform:translateY(105%); transition:transform 0.28s cubic-bezier(0.3,0.9,0.3,1);
+box-shadow:0 -10px 40px rgba(0,0,0,0.55);
+}
+#tools.open{transform:translateY(0)}
+#tools::before{
+content:""; display:block; flex:none; width:36px; height:4px; border-radius:2px;
+background:var(--line); margin:6px auto 2px;
+}
+#tools::-webkit-scrollbar{display:none}
+#sheetScrim.show{display:block; position:fixed; inset:0; z-index:35; background:rgba(0,0,0,0.45)}
+#toolsLabel, #toolTabs, #toolGrid{display:none !important}
+#extraLabelMobile{display:block !important}
+#extraGrid{display:grid !important}
+#tools[data-sheet="brush"] > :not(#secBrush){display:none}
+#tools[data-sheet="color"] > :not(#secColor){display:none}
+#tools[data-sheet="brush"] #secBrush,
+#tools[data-sheet="color"] #secColor{border-bottom:none}
+.tool-grid{grid-template-columns:repeat(3,1fr); gap:6px}
+.tool{padding:12px 2px 10px; font-size:11px}
+.tool svg.ic{width:22px; height:22px}
+#mobileBar{
+display:flex; align-items:stretch; gap:2px; flex:none;
+background:var(--panel); border-top:1px solid var(--line);
+padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+}
+#mobileBar .tool{flex:1; padding:8px 0 6px; font-size:10px; gap:4px; border-radius:10px}
+#mobileBar .tool svg.ic{width:22px; height:22px}
+#mbColor, #mbMore{
+flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+gap:4px; background:transparent; border:none; color:var(--dim);
+font-size:10px; border-radius:10px; padding:8px 0 6px; cursor:pointer;
+}
+#mbColor:active, #mbMore:active{background:var(--hover)}
+#mbColorDot{
+width:22px; height:22px; border-radius:50%; background:#fff;
+box-shadow:inset 0 0 0 1px rgba(255,255,255,0.25);
+}
+#mbMore svg.ic{width:22px; height:22px}
+#floatCtrl{left:8px; bottom:8px; display:none}
+#floatCtrl.zoomed{display:flex}
+#floatCtrl button{padding:12px 13px; font-size:14px; min-width:44px}
+input[type=range]::-webkit-slider-runnable-track{height:5px}
+input[type=range]::-webkit-slider-thumb{width:22px; height:22px; margin-top:-8.5px}
+input[type=range]{height:38px}
+.swatches{gap:11px}
+.color-custom input[type=color]{width:34px; height:34px}
+.layer-item{padding:11px 10px; font-size:13px}
+.layer-item .eye svg.ic{width:18px; height:18px}
+.checkbox-row{padding:6px 0; font-size:13px}
+.checkbox-row input{width:42px; height:25px}
+.checkbox-row input::after{width:19px; height:19px; top:3px; left:3px}
+.checkbox-row input:checked::after{left:20px}
+details.acc summary{padding:10px 0; font-size:12px}
+.seg button{padding:11px 0; font-size:12.5px}
+.btn.small{padding:12px 15px; font-size:13px}
+.hint{display:none}
+}</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg class="logo-glyph" viewBox="0 0 24 24" fill="none" stroke="#5b6cff" stroke-width="2.6" stroke-linecap="round">
+      <path d="M3.5 12c2.8-4.2 5.7-4.2 8.5 0s5.7 4.2 8.5 0"/>
+    </svg>
+    <span class="logo-word">skety</span>
+  </div>
+  <select id="sizeSelect" title="대지 크기">
+    <option value="1920x1080">유튜브 16:9 · 1920×1080</option>
+    <option value="1280x720">유튜브 썸네일 · 1280×720</option>
+    <option value="1080x1920">릴스·쇼츠 9:16 · 1080×1920</option>
+    <option value="1080x1350">인스타 세로 4:5 · 1080×1350</option>
+    <option value="1080x1080">정사각 1:1 · 1080×1080</option>
+    <option value="512x512">스티커 · 512×512</option>
+    <option value="custom">직접 입력…</option>
+  </select>
+  <div class="spacer"></div>
+  <button class="btn" id="undoBtn" title="되돌리기 (Ctrl+Z)">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+    <span class="label">되돌리기</span>
+  </button>
+  <button class="btn" id="redoBtn" title="다시하기 (Ctrl+Shift+Z)">
+    <svg class="ic" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
+    <span class="label">다시하기</span>
+  </button>
+  <button class="btn" id="clearBtn" title="현재 레이어 비우기 (되돌리기 가능)">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-.9 14.1a1 1 0 0 1-1 .9H6.9a1 1 0 0 1-1-.9L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+    <span class="label">지우기</span>
+  </button>
+  <button class="btn primary" id="saveBtn" title="PNG로 저장">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>
+    <span class="label">PNG 저장</span>
+  </button>
+</header>
+
+<main>
+  <div id="canvasArea">
+    <div id="canvasWrap">
+      <div id="stage">
+        <canvas id="refCanvas"></canvas>
+        <div id="layerStack"></div>
+        <canvas id="overlay"></canvas>
+        <div id="guides">
+          <div class="gz gz-top"><span>계정명·음악 정보에 가려지는 영역</span></div>
+          <div class="gz gz-bottom"><span>캡션·홈 UI에 가려지는 영역</span></div>
+          <div class="gz gz-right"><span>좋아요·댓글 버튼</span></div>
+          <div class="gz-safe"><span>✓ 안전 영역 — 중요한 내용은 이 안에</span></div>
+        </div>
+        <div id="refBadge">🖼 밑그림 · 저장 시 제외됨</div>
+      </div>
+    </div>
+    <div id="floatCtrl">
+      <button id="zoomOut" title="축소">−</button>
+      <button id="zoomLabel" title="클릭하면 화면 맞춤">100%</button>
+      <button id="zoomIn" title="확대 (Ctrl+휠 · 두 손가락)">＋</button>
+    </div>
+    <div id="cursorRing"></div>
+  </div>
+
+  <aside id="tools">
+    <section id="secTools">
+      <div class="group-label" id="toolsLabel">도구</div>
+      <div class="group-label" id="extraLabelMobile" style="display:none">기타 도구</div>
+      <div class="seg" id="toolTabs" style="margin-bottom:10px">
+        <button data-tab="basic" class="on">기본</button>
+        <button data-tab="extra">기타</button>
+      </div>
+      <div class="tool-grid" id="toolGrid">
+        <div class="tool active" data-tool="pencil">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M17 3a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L17 3z"/><path d="m14.5 5.5 3 3"/></svg>
+          연필
+        </div>
+        <div class="tool" data-tool="chalk">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M6.5 18 15 5.5" style="stroke-width:4.4"/><path d="M17.5 12.5h.01"/><path d="M16.5 17h.01"/><path d="M20 15h.01"/></svg>
+          분필
+        </div>
+        <div class="tool" data-tool="crayon">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 3l4 6v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l4-6z"/><path d="M8 13h8"/></svg>
+          크레파스
+        </div>
+        <div class="tool" data-tool="marker">
+          <svg class="ic" viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3"/><path d="M22 12 17.4 16.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4l8 8z"/></svg>
+          마커
+        </div>
+        <div class="tool" data-tool="eraser">
+          <svg class="ic" viewBox="0 0 24 24"><path d="m7 21-4.3-4.3a2 2 0 0 1 0-2.8l9.6-9.6a2 2 0 0 1 2.8 0l5.6 5.6a2 2 0 0 1 0 2.8L13 21H7z"/><path d="M5 12l7 7"/></svg>
+          지우개
+        </div>
+        <div class="tool" data-tool="eyedrop">
+          <svg class="ic" viewBox="0 0 24 24"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg>
+          스포이드
+        </div>
+        <div class="tool" data-tool="move">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M2 12h20"/><path d="m5 9-3 3 3 3"/><path d="m9 5 3-3 3 3"/><path d="m15 19 3 3 3-3"/><path d="m19 9 3 3-3 3"/></svg>
+          이동
+        </div>
+      </div>
+      <div class="tool-grid" id="extraGrid" style="display:none">
+        <div class="tool" data-tool="clean">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 12h16"/></svg>
+          클린
+        </div>
+        <div class="tool" data-tool="fine">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 12h16" style="stroke-width:1"/></svg>
+          파인라인
+        </div>
+        <div class="tool" data-tool="rough">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 12l3-.6 3 .9 3-.7 3 .8 4-.4" style="stroke-width:1.2"/></svg>
+          러프파인
+        </div>
+        <div class="tool" data-tool="dry">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 12h4"/><path d="M10 12h6"/><path d="M18 12h2"/><path d="M6 16h3"/><path d="M12 16h5"/><path d="M5 8h5"/><path d="M13 8h4"/></svg>
+          드라이라이너
+        </div>
+        <div class="tool" data-tool="wobble">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/></svg>
+          워블
+        </div>
+        <div class="tool" data-tool="inky">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 3s6 7.5 6 11.5a6 6 0 0 1-12 0C6 10.5 12 3 12 3z"/></svg>
+          잉키
+        </div>
+        <div class="tool" data-tool="bleed">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 4s5 6 5 9.5a5 5 0 0 1-10 0C7 10 12 4 12 4z"/><path d="M4.5 19h.01"/><path d="M8 21h.01"/><path d="M16 21h.01"/><path d="M19.5 19h.01"/></svg>
+          블리디
+        </div>
+        <div class="tool" data-tool="destructo">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 12h2.5"/><path d="M7.5 11l2 1.5"/><path d="M12 12h2"/><path d="M16 11.5l1.5 1"/><path d="M19.5 12H21"/><path d="M6 14h.01"/><path d="M15 14.5h.01"/><path d="M10 10h.01"/></svg>
+          디스트럭토
+        </div>
+        <div class="tool" data-tool="streak">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 9h13"/><path d="M4 13h16"/><path d="M4 17h10"/></svg>
+          스트리커
+        </div>
+        <div class="tool" data-tool="tacky">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 12c3-2.5 5 2.5 8 0s5-2.5 8 0" style="stroke-width:3.4"/></svg>
+          태키
+        </div>
+        <div class="tool" data-tool="chisel">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M5 19 16 8l3 3L8 22l-4 1 1-4z"/><path d="M17 7l3 3"/></svg>
+          처비치즐
+        </div>
+        <div class="tool" data-tool="brushy">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 19C8 17 15 9 20 5" style="stroke-width:3"/><path d="M4 19l3 .5"/></svg>
+          브러시
+        </div>
+        <div class="tool" data-tool="stitch">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 12h18" style="stroke-width:1.2"/><path d="M6 12h4.5" style="stroke-width:3"/><path d="M13.5 12H18" style="stroke-width:3"/></svg>
+          스티처 1
+        </div>
+        <div class="tool" data-tool="stitch2">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 14h18" style="stroke-width:1.2"/><path d="m7 14 3-4"/><path d="m14 14 3-4"/></svg>
+          스티처 2
+        </div>
+        <div class="tool" data-tool="thin">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 12h18" style="stroke-width:0.9"/></svg>
+          씬리지
+        </div>
+        <div class="tool" data-tool="blobby">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 12c2.5-3.5 5-3.5 7.5 0s5 3.5 7.5 0" style="stroke-width:4"/></svg>
+          빅블로비
+        </div>
+        <div class="tool" data-tool="rider">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 12l2-1.2 2 1.8 2-1.2 2 1.8 2-1.2 2 1.8 2-1.2 2 1.2"/></svg>
+          러프라이더
+        </div>
+        <div class="tool" data-tool="copy">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 11h.01"/><path d="M7 12h.01"/><path d="M10 11h.01"/><path d="M13 12.5h.01"/><path d="M16 11.5h.01"/><path d="M19 12h.01"/><path d="M5.5 13.5h.01"/><path d="M11.5 13.8h.01"/><path d="M17.5 13.6h.01"/></svg>
+          카피숍
+        </div>
+        <div class="tool" data-tool="zigzag">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 13.5l2.2-3 2.3 3 2.2-3 2.3 3 2.2-3 2.3 3 2.2-3 2.3 3" style="stroke-width:1.4"/></svg>
+          재거
+        </div>
+        <div class="tool" data-tool="weirdo">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 12c1-2.2 2-2.2 3 0s2 2.2 3 0 2-2.2 3 0 2 2.2 3 0 2-2.2 3 0 2 2.2 3 0"/></svg>
+          위어도
+        </div>
+      </div>
+    </section>
+
+    <section id="secBrush">
+      <div class="group-label">브러시</div>
+      <div class="slider-row">
+        <span class="mini">굵기</span>
+        <input type="range" id="sizeRange" min="2" max="120" value="18">
+        <output id="sizeOut">18</output>
+      </div>
+      <div class="slider-row" style="margin-top:6px">
+        <span class="mini">진하기</span>
+        <input type="range" id="alphaRange" min="5" max="100" value="100">
+        <output id="alphaOut">100%</output>
+      </div>
+    </section>
+
+    <section id="secColor">
+      <div class="group-label">색상</div>
+      <div class="swatches" id="swatches"></div>
+      <div class="color-custom">
+        <input type="color" id="colorPicker" value="#ffffff">
+        <span>직접 선택</span>
+      </div>
+    </section>
+
+    <details class="acc">
+      <summary>레이어 <span class="acc-hint" id="layerCount">1장</span></summary>
+      <div class="acc-body">
+        <div id="layerList"></div>
+        <div class="layer-actions">
+          <button class="btn small" id="addLayerBtn"><svg class="ic" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M12 5v14"/><path d="M5 12h14"/></svg> 추가</button>
+          <button class="btn small" id="delLayerBtn">삭제</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="acc">
+      <summary>밑그림 이미지</summary>
+      <div class="acc-body">
+        <button class="btn small" id="refLoadBtn"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-4.5-4.5L7 20"/></svg> 이미지 불러오기</button>
+        <input type="file" id="refFile" accept="image/*" hidden>
+        <div class="ref-controls" id="refControls">
+          <div class="slider-row">
+            <span class="mini">진하기</span>
+            <input type="range" id="refAlphaRange" min="5" max="100" value="40">
+            <output id="refAlphaOut">40%</output>
+          </div>
+          <label class="checkbox-row">
+            <input type="checkbox" id="refExportChk"> PNG 저장에 포함
+          </label>
+          <button class="btn small" id="refRemoveBtn">밑그림 제거</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="acc">
+      <summary>보기 · 내보내기</summary>
+      <div class="acc-body">
+        <label class="checkbox-row" style="margin-top:0">
+          <input type="checkbox" id="guideChk"> 릴스 세이프존 가이드
+        </label>
+        <div class="seg-row">
+          <span class="mini">배경</span>
+          <div class="seg" id="bgSeg">
+            <button data-bg="checker" class="on">체커</button>
+            <button data-bg="black">검정</button>
+            <button data-bg="white">흰색</button>
+          </div>
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="trimChk"> 그린 부분만 잘라서 저장
+        </label>
+      </div>
+    </details>
+
+    <section>
+      <div id="saveState">·</div>
+      <div class="hint" style="margin-top:8px">
+        기본 저장은 밑그림을 뺀 투명 배경 PNG입니다.<br>
+        그림은 브라우저에 자동 임시저장돼요.
+      </div>
+    </section>
+  </aside>
+</main>
+
+<div id="sheetScrim"></div>
+<nav id="mobileBar">
+  <div class="tool" data-tool="pencil">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M17 3a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L17 3z"/><path d="m14.5 5.5 3 3"/></svg>
+    연필
+  </div>
+  <div class="tool" data-tool="chalk">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M6.5 18 15 5.5" style="stroke-width:4.4"/><path d="M17.5 12.5h.01"/><path d="M16.5 17h.01"/><path d="M20 15h.01"/></svg>
+    분필
+  </div>
+  <div class="tool" data-tool="crayon">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M12 3l4 6v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l4-6z"/><path d="M8 13h8"/></svg>
+    크레파스
+  </div>
+  <div class="tool" data-tool="marker">
+    <svg class="ic" viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3"/><path d="M22 12 17.4 16.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4l8 8z"/></svg>
+    마커
+  </div>
+  <div class="tool" data-tool="eraser">
+    <svg class="ic" viewBox="0 0 24 24"><path d="m7 21-4.3-4.3a2 2 0 0 1 0-2.8l9.6-9.6a2 2 0 0 1 2.8 0l5.6 5.6a2 2 0 0 1 0 2.8L13 21H7z"/><path d="M5 12l7 7"/></svg>
+    지우개
+  </div>
+  <div class="tool" data-tool="eyedrop">
+    <svg class="ic" viewBox="0 0 24 24"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg>
+    스포이드
+  </div>
+  <div class="tool" data-tool="move">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M2 12h20"/><path d="m5 9-3 3 3 3"/><path d="m9 5 3-3 3 3"/><path d="m15 19 3 3 3-3"/><path d="m19 9 3 3-3 3"/></svg>
+    이동
+  </div>
+  <button id="mbColor" title="색상 선택"><span id="mbColorDot"></span>색상</button>
+  <button id="mbMore" title="브러시·색상·레이어·설정 전체">
+    <svg class="ic" viewBox="0 0 24 24" style="stroke-width:3"><path d="M5 12h.01"/><path d="M12 12h.01"/><path d="M19 12h.01"/></svg>
+    전체
+  </button>
+</nav>
+
+<script>(()=>{"use strict";console.log("%cskety © 2026 WarmBread Corp. All rights reserved.","color:#5b6cff;font-weight:bold");const t={tool:"pencil",color:"#ffffff",size:18,alpha:1,w:1920,h:1080,layers:[],activeLayer:null,ref:null};let e=0;const a=document.getElementById("stage"),n=document.getElementById("canvasWrap"),o=document.getElementById("layerStack"),l=document.getElementById("refCanvas"),r=l.getContext("2d"),s=document.getElementById("overlay"),c=s.getContext("2d");function i(a){const n=document.createElement("canvas");n.width=t.w,n.height=t.h;const l={id:++e,name:a||`레이어 ${e}`,canvas:n,visible:!0};return t.layers.push(l),o.appendChild(n),l}function h(){return t.layers.find(e=>e.id===t.activeLayer)||null}function d(){const t=h();return t?t.canvas.getContext("2d"):null}const m=document.getElementById("layerList");function u(){m.innerHTML="",[...t.layers].reverse().forEach(e=>{const a=document.createElement("div");a.className="layer-item"+(e.id===t.activeLayer?" active":"");const n=document.createElement("span");n.className="eye"+(e.visible?"":" off"),n.innerHTML=e.visible?'<svg class="ic" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.5"/></svg>':'<svg class="ic" viewBox="0 0 24 24"><path d="m4 4 16 16"/><path d="M10.8 5.7A10 10 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17.3 17.3 0 0 1-2.9 3.7"/><path d="M6.7 6.7A16.8 16.8 0 0 0 2.5 12S6 18.5 12 18.5a9.6 9.6 0 0 0 3.7-.8"/><path d="M10 10.1a2.6 2.6 0 0 0 3.7 3.7"/></svg>',n.addEventListener("click",t=>{t.stopPropagation(),e.visible=!e.visible,e.canvas.style.display=e.visible?"":"none",u(),bt()});const o=document.createElement("div");o.className="thumb";const l=document.createElement("canvas");l.width=34,l.height=22;const r=Math.min(34/t.w,22/t.h);l.getContext("2d").drawImage(e.canvas,(34-t.w*r)/2,(22-t.h*r)/2,t.w*r,t.h*r),o.appendChild(l);const s=document.createElement("span");s.className="name",s.textContent=e.name,a.append(n,o,s),a.addEventListener("click",()=>{Q(),t.activeLayer=e.id,u()}),m.appendChild(a)});const e=document.getElementById("layerCount");e&&(e.textContent=t.layers.length+"장")}function f(e,a,n){t.w=e,t.h=a,t.layers.forEach(t=>{let o=null;n&&t.canvas.width&&(o=document.createElement("canvas"),o.width=t.canvas.width,o.height=t.canvas.height,o.getContext("2d").drawImage(t.canvas,0,0)),t.canvas.width=e,t.canvas.height=a,o&&t.canvas.getContext("2d").drawImage(o,0,0)}),s.width=e,s.height=a,l.width=e,l.height=a,E(),g=1,p()}document.getElementById("addLayerBtn").addEventListener("click",()=>{if(Q(),t.layers.length>=6)return void alert("레이어는 최대 6장까지예요.");const e=i();t.activeLayer=e.id,u(),bt()}),document.getElementById("delLayerBtn").addEventListener("click",function(){if(Q(),t.layers.length<=1)return void alert("마지막 레이어는 삭제할 수 없어요.");const e=h();e&&confirm(`"${e.name}"를 삭제할까요?`)&&(o.removeChild(e.canvas),t.layers=t.layers.filter(t=>t.id!==e.id),t.activeLayer=t.layers[t.layers.length-1].id,rt=rt.filter(t=>t.layerId!==e.id),st=st.filter(t=>t.layerId!==e.id),ut(),u(),bt())});let g=1;function p(){const e=function(){const e=Math.max(80,n.clientWidth-32),a=Math.max(80,n.clientHeight-32);return Math.min(e/t.w,a/t.h,1.5)}()*g;a.style.width=Math.round(t.w*e)+"px",a.style.height=Math.round(t.h*e)+"px";const o=document.getElementById("zoomLabel");o&&(o.textContent=Math.round(100*g)+"%");const l=document.getElementById("floatCtrl");l&&l.classList.toggle("zoomed",100!==Math.round(100*g))}function y(t,e,a){const o=g;if(g=Math.min(4,Math.max(.5,t)),g===o)return;const l=n.getBoundingClientRect(),r=(e??l.left+l.width/2)-l.left,s=(a??l.top+l.height/2)-l.top,c=n.scrollLeft+r,i=n.scrollTop+s,h=g/o;p(),n.scrollLeft=c*h-r,n.scrollTop=i*h-s}window.addEventListener("resize",p);const M=document.getElementById("refControls"),x=document.getElementById("refAlphaRange"),v=document.getElementById("refAlphaOut"),b=document.getElementById("refExportChk");function w(){const e=document.getElementById("refBadge");t.ref?(e.style.display="block",e.textContent=t.ref.includeInExport?"🖼 밑그림 · 저장에 포함됨":"🖼 밑그림 · 저장 시 제외됨"):e.style.display="none"}function E(){if(r.clearRect(0,0,t.w,t.h),w(),!t.ref)return void(l.style.display="none");l.style.display="",l.style.opacity=t.ref.alpha;const e=t.ref.img,a=Math.min(t.w/e.width,t.h/e.height),n=e.width*a,o=e.height*a;r.drawImage(e,(t.w-n)/2,(t.h-o)/2,n,o)}function I(e){const a=s.getBoundingClientRect();return{x:(e.clientX-a.left)*(t.w/a.width),y:(e.clientY-a.top)*(t.h/a.height),cx:e.clientX,cy:e.clientY,t:e.timeStamp||performance.now(),rawP:e.pressure,isPen:"pen"===e.pointerType&&e.pressure>0}}function L(t,e,a,n,o,l){const r=n-e,s=o-a,c=Math.hypot(r,s)||1,i=Math.ceil(c/Math.max(.6,.32*l));for(let n=0;n<=i;n++){const o=n/i,c=e+r*o+(Math.random()-.5)*l*.4,h=a+s*o+(Math.random()-.5)*l*.4;if(t.globalAlpha=.55+.45*Math.random(),t.beginPath(),t.arc(c,h,l*(.33+.24*Math.random()),0,7),t.fill(),Math.random()<.3){t.globalAlpha=.18+.4*Math.random();const e=7*Math.random();t.fillRect(c+Math.cos(e)*l*.85,h+Math.sin(e)*l*.85,1,1)}}}document.getElementById("refLoadBtn").addEventListener("click",()=>document.getElementById("refFile").click()),document.getElementById("refFile").addEventListener("change",e=>{const a=e.target.files[0];if(!a)return;const n=new Image;n.onload=()=>{t.ref={img:n,alpha:+x.value/100,includeInExport:b.checked},M.classList.add("show"),E(),bt()};const o=URL.createObjectURL(a);n.addEventListener("load",()=>URL.revokeObjectURL(o),{once:!0}),n.src=o,e.target.value=""}),x.addEventListener("input",()=>{v.textContent=x.value+"%",t.ref&&(t.ref.alpha=+x.value/100,l.style.opacity=t.ref.alpha)}),x.addEventListener("change",bt),b.addEventListener("change",()=>{t.ref&&(t.ref.includeInExport=b.checked),w(),bt()}),document.getElementById("refRemoveBtn").addEventListener("click",()=>{t.ref=null,M.classList.remove("show"),E(),bt()});const k={pencil:{spacing:t=>Math.max(1,.12*t),stamp(t,e,a,n,o){const l=Math.max(.6,.28*n*o),r=Math.max(3,Math.round(3*l));for(let n=0;n<r;n++){const n=Math.random()*Math.PI*2,o=Math.random()*l;t.globalAlpha=.35+.45*Math.random();const r=.8+.8*Math.random();t.fillRect(e+Math.cos(n)*o,a+Math.sin(n)*o,r,r)}}},chalk:{spacing:t=>Math.max(2,.18*t),stamp(t,e,a,n,o){const l=Math.max(2,.55*n*o),r=Math.round(4*l);for(let n=0;n<r;n++){const n=Math.random()*Math.PI*2,o=Math.sqrt(Math.random())*l;t.globalAlpha=.04+.22*Math.random();const r=1+2.2*Math.random();t.fillRect(e+Math.cos(n)*o,a+Math.sin(n)*o,r,r)}}},crayon:{spacing:t=>Math.max(1.5,.15*t),stamp(t,e,a,n,o){const l=Math.max(1.5,.42*n*o),r=2.2+3.5*Math.random(),s=Math.round(l*r);for(let n=0;n<s;n++){const n=Math.random()*Math.PI*2,o=Math.sqrt(Math.random())*l;t.globalAlpha=.25+.5*Math.random();const r=1.6+2.4*Math.random();t.fillRect(e+Math.cos(n)*o,a+Math.sin(n)*o,r,r)}}},wobble:{spacing:t=>Math.max(.6,.09*t),stamp(t,e,a,n,o){R.ph=(R.ph||0)+.07+.015*Math.random(),void 0===R.seed&&(R.seed=7*Math.random());const l=z??0,r=Math.cos(l+Math.PI/2),s=Math.sin(l+Math.PI/2),c=Math.sin(R.ph)*n*.07,i=.68+.32*Math.sin(1.35*R.ph+R.seed);t.globalAlpha=1,t.beginPath(),t.arc(e+r*c+.4*(Math.random()-.5),a+s*c+.4*(Math.random()-.5),Math.max(.6,.27*n*i*(.55+.45*o)),0,7),t.fill()}},inky:{spacing:t=>Math.max(.6,.09*t),stamp(t,e,a,n,o){R.ph=(R.ph||0)+.05+.015*Math.random(),void 0===R.seed&&(R.seed=7*Math.random());const l=.48+.38*(.7*Math.sin(R.ph+R.seed)+.3*Math.sin(2.3*R.ph+1.7*R.seed)+1)/2+.14;t.globalAlpha=1,t.beginPath(),t.arc(e,a,Math.max(.7,.3*n*l*(.5+.5*o)),0,7),t.fill()}},bleed:{spacing:t=>Math.max(.7,.1*t),stamp(t,e,a,n,o){const l=Math.max(.8,.2*n*(.5+.5*o));t.globalAlpha=.97,t.beginPath(),t.arc(e+.4*(Math.random()-.5),a+.4*(Math.random()-.5),l,0,7),t.fill();for(let n=0;n<6;n++){const n=7*Math.random(),o=l*(.9+.9*Math.random());t.globalAlpha=.22+.4*Math.random();const r=.7+1*Math.random();t.fillRect(e+Math.cos(n)*o,a+Math.sin(n)*o,r,r)}}},streak:{spacing:t=>Math.max(.7,.08*t),stamp(t,e,a,n,o){R.lanes||(R.lanes=Array.from({length:9},()=>{const t=Math.random()-.5;return{o:t,a:Math.max(.15,.75*(1-1.2*Math.abs(t))+.25*Math.random()),w:.7+1.5*Math.random()}}));const l=z??0,r=Math.cos(l+Math.PI/2),s=Math.sin(l+Math.PI/2);for(const l of R.lanes){const c=l.o*n*.8*(.5+.5*o);t.globalAlpha=l.a,t.fillRect(e+r*c,a+s*c,l.w,l.w)}}},dry:{spacing:t=>Math.max(.7,.08*t),stamp(t,e,a,n,o){R.lanes||(R.lanes=Array.from({length:12},()=>{const t=Math.random()-.5;return{o:t,a:Math.max(.1,.8*(1-1.5*Math.abs(t))+.2*Math.random()),w:.7+1.1*Math.random(),skip:.35*Math.random()}}));const l=z??0,r=Math.cos(l+Math.PI/2),s=Math.sin(l+Math.PI/2);for(const l of R.lanes){if(Math.random()<l.skip)continue;const c=l.o*n*.5*(.6+.4*o);t.globalAlpha=l.a,t.fillRect(e+r*c,a+s*c,l.w,l.w)}}},chisel:{spacing:t=>Math.max(.7,.07*t),stamp(t,e,a,n,o){R.lanes||(R.lanes=Array.from({length:14},()=>{const t=Math.random()-.5;return{o:t,a:Math.max(.3,.9*(1-.9*Math.abs(t))+.1*Math.random()),w:1.6+1.4*Math.random(),skip:.15*Math.random()}}));const l=z??0,r=Math.cos(l+Math.PI/2),s=Math.sin(l+Math.PI/2);for(const l of R.lanes){if(Math.random()<l.skip)continue;const c=l.o*n*.8*(.7+.3*o);t.globalAlpha=l.a,t.fillRect(e+r*c,a+s*c,l.w,l.w)}}},stitch:{spacing:t=>Math.max(1,.14*t),stamp(t,e,a,n,o){if(null===z)return;if(R.u=(R.u||0)+Math.max(1,.14*n),R.u<(R.next??0))return;R.next=R.u+n*(.55+.55*Math.random());const l=n*(1.1+.7*Math.random())*(.3+.7*S),r=(z??0)+.24*(Math.random()-.5),s=Math.cos(r),c=Math.sin(r),i=(Math.random()-.5)*n*.16,h=(Math.random()-.5)*n*.16,d=e-s*l*.3+i,m=a-c*l*.3+h;L(t,d,m,e+s*l*.7+i,a+c*l*.7+h,Math.max(1.6,.14*n)),L(t,d,m,d+s*l*(.18+.15*Math.random()),m+c*l*.2,Math.max(2.6,.3*n))}},stitch2:{spacing:t=>Math.max(.8,.1*t),stamp(t,e,a,n,o){const l=Math.max(1.2,.085*n);if(null===z)return t.globalAlpha=.9,t.beginPath(),t.arc(e,a,.5*l,0,7),void t.fill();if(R.u=(R.u||0)+Math.max(.8,.1*n),!R.zlast)return R.zlast={x:e,y:a},void(R.next=R.u+n*(.9+Math.random()));if(L(t,R.zlast.x,R.zlast.y,e,a,l),R.zlast={x:e,y:a},R.u>=(R.next??0)){R.next=R.u+n*(.9+1.1*Math.random());const o=(.75+.5*Math.random())*(.4+.6*S),r=Math.cos(z??0),s=Math.sin(z??0),c=e-r*n*.38*o+s*n*.1*o,i=a-s*n*.38*o+-r*n*.1*o,h=e+r*n*.1*o,d=a+s*n*.1*o;L(t,e,a,c,i,l),L(t,c,i,h,d,l),R.zlast={x:h,y:d}}}},zigzag:{spacing:t=>Math.max(1.2,.15*t),stamp(t,e,a,n,o){if(null===z)return;R.i=(R.i||0)+1;const l=R.i%2?1:-1,r=n*(.15+.09*Math.random())*(.6+.4*o),s=z??0,c=e+Math.cos(s+Math.PI/2)*l*r,i=a+Math.sin(s+Math.PI/2)*l*r;R.zlast&&L(t,R.zlast.x,R.zlast.y,c,i,Math.max(1.1,.09*n)),R.zlast={x:c,y:i}}},clean:{spacing:t=>Math.max(.5,.08*t),stamp(t,e,a,n,o){t.globalAlpha=1,t.beginPath(),t.arc(e,a,Math.max(.6,.25*n*(.45+.55*o)),0,7),t.fill()}},fine:{spacing:t=>Math.max(.5,.09*t),stamp(t,e,a,n,o){R.ph=(R.ph||0)+.09,void 0===R.seed&&(R.seed=7*Math.random());const l=.72+.28*Math.sin(1.6*R.ph+R.seed);t.globalAlpha=.97,t.beginPath(),t.arc(e+.4*(Math.random()-.5),a+.4*(Math.random()-.5),Math.max(.5,.14*n*l*(.6+.4*o)),0,7),t.fill()}},rough:{spacing:t=>Math.max(.5,.09*t),stamp(t,e,a,n,o){R.ph=(R.ph||0)+.1,void 0===R.seed&&(R.seed=7*Math.random());const l=.7+.3*Math.sin(1.7*R.ph+R.seed),r=Math.max(.5,.13*n*l*(.6+.4*o));t.globalAlpha=.95,t.beginPath(),t.arc(e+.9*(Math.random()-.5),a+.9*(Math.random()-.5),r,0,7),t.fill();for(let n=0;n<2;n++){const n=7*Math.random();t.globalAlpha=.25+.35*Math.random(),t.fillRect(e+Math.cos(n)*r*(1.1+.7*Math.random()),a+Math.sin(n)*r*(1.1+.7*Math.random()),1,1)}}},destructo:{spacing:t=>Math.max(.8,.1*t),stamp(t,e,a,n,o){if(Math.random()<.06)return;const l=Math.max(1,.24*n*(.5+.5*o)),r=l*(.55+.9*Math.random());t.globalAlpha=.95,t.beginPath(),t.arc(e+(Math.random()-.5)*l*.7,a+(Math.random()-.5)*l*.7,r,0,7),t.fill();const s=z??0,c=Math.cos(s+Math.PI/2),i=Math.sin(s+Math.PI/2);for(let n=0;n<2;n++){const n=(Math.random()<.5?-1:1)*l*(.7+.9*Math.random());t.globalAlpha=.6+.4*Math.random(),t.beginPath(),t.arc(e+c*n,a+i*n,l*(.25+.4*Math.random()),0,7),t.fill()}}},tacky:{spacing:t=>Math.max(.7,.08*t),stamp(t,e,a,n,o){R.lanes||(R.lanes=Array.from({length:11},()=>{const t=Math.random()-.5;return{o:t,a:Math.max(.2,.85*(1-Math.abs(t))+.15*Math.random()),w:1.2+1.2*Math.random(),skip:.22*Math.random()}}));const l=z??0,r=Math.cos(l+Math.PI/2),s=Math.sin(l+Math.PI/2);for(const l of R.lanes){if(Math.random()<l.skip)continue;const c=(l.o+.06*(Math.random()-.5))*n*.62*(.6+.4*o);t.globalAlpha=l.a,t.fillRect(e+r*c,a+s*c,l.w,l.w)}}},brushy:{spacing:t=>Math.max(.6,.08*t),stamp(t,e,a,n,o){R.ph=(R.ph||0)+.08,void 0===R.seed&&(R.seed=7*Math.random());const l=.85+.15*Math.sin(R.ph+R.seed);t.globalAlpha=1,t.beginPath(),t.arc(e+.35*(Math.random()-.5),a+.35*(Math.random()-.5),Math.max(.5,.36*n*l*Math.pow(o,1.3)),0,7),t.fill()}},thin:{spacing:()=>.8,stamp(t,e,a,n,o){R.ph=(R.ph||0)+.38;const l=z??0,r=Math.cos(l+Math.PI/2),s=Math.sin(l+Math.PI/2),c=Math.sin(R.ph)*n*.045;t.globalAlpha=1,t.beginPath(),t.arc(e+r*c,a+s*c,Math.max(.6,.065*n),0,7),t.fill()}},blobby:{spacing:t=>Math.max(.7,.09*t),stamp(t,e,a,n,o){R.ph=(R.ph||0)+.11+.015*Math.random();const l=Math.max(1,.3*n*(.62+.38*Math.sin(R.ph)));t.globalAlpha=1,t.beginPath(),t.arc(e,a,l,0,7),t.fill()}},rider:{spacing:t=>Math.max(.7,.09*t),stamp(t,e,a,n,o){const l=Math.max(.8,.18*n*(.5+.5*o));t.globalAlpha=1,t.beginPath(),t.arc(e+.6*(Math.random()-.5),a+.6*(Math.random()-.5),l,0,7),t.fill();for(let n=0;n<4;n++){const n=7*Math.random();t.globalAlpha=.3+.35*Math.random();const o=.7+.8*Math.random();t.fillRect(e+Math.cos(n)*l*(1+.5*Math.random()),a+Math.sin(n)*l*(1+.5*Math.random()),o,o)}}},copy:{spacing:t=>Math.max(.7,.09*t),stamp(t,e,a,n,o){if(Math.random()<.08)return;const l=Math.max(.9,.19*n*(.5+.5*o));t.globalAlpha=.85+.15*Math.random(),t.beginPath(),t.arc(e+.9*(Math.random()-.5),a+.9*(Math.random()-.5),l,0,7),t.fill();for(let n=0;n<5;n++){const n=7*Math.random(),o=l*(.8+1*Math.random());t.globalAlpha=.3+.5*Math.random(),t.fillRect(e+Math.cos(n)*o,a+Math.sin(n)*o,1,1)}}},weirdo:{spacing:t=>Math.max(.7,.09*t),stamp(t,e,a,n,o){R.ph=(R.ph||0)+.13+.03*Math.random(),void 0===R.seed&&(R.seed=7*Math.random());const l=z??0,r=Math.cos(l+Math.PI/2),s=Math.sin(l+Math.PI/2),c=Math.sin(R.ph+1.6*Math.sin(.37*R.ph+R.seed))*n*.2;t.globalAlpha=1,t.beginPath(),t.arc(e+r*c,a+s*c,Math.max(.7,.15*n),0,7),t.fill()}},marker:{spacing:t=>Math.max(.5,.1*t),stamp(t,e,a,n,o){t.globalAlpha=1,t.beginPath(),t.arc(e,a,Math.max(.5,n/2*(.15+.85*o)),0,2*Math.PI),t.fill()}},eraser:{line:!0,erase:!0}};let B=!1,P=null,C=0,A=null,R={},z=0,S=1,T=.7;function D(e){const a=h();if(a)if(a.visible)if(B=!0,R={},z=null,T=e.isPen?Math.min(1,Math.max(.15,e.rawP)):.65,e.p=T,P=e,C=0,"eraser"===t.tool){const n=d();A=ct(a),n.save(),n.globalCompositeOperation="destination-out",n.globalAlpha=1,n.lineWidth=t.size,n.lineCap="round",n.lineJoin="round",n.strokeStyle="#000",n.fillStyle="#000",function(t,e,a){t.beginPath(),t.arc(e.x,e.y,a/2,0,2*Math.PI),t.fill()}(n,e,t.size)}else{c.fillStyle=t.color,c.strokeStyle=t.color,s.style.opacity=t.alpha;try{k[t.tool].stamp(c,e.x,e.y,t.size,e.p)}catch{}}else vt("숨겨진 레이어에는 그릴 수 없어요")}function q(e){if(!B)return;const a=e.isPen?.8:.6;e.x=P.x+(e.x-P.x)*a,e.y=P.y+(e.y-P.y)*a;const n=k[t.tool],o=e.x-P.x,l=e.y-P.y,r=Math.hypot(o,l);if(n.line){const t=d();return t.beginPath(),t.moveTo(P.x,P.y),t.lineTo(e.x,e.y),t.stroke(),void(P=e)}if(e.p=function(t){let e;if(t.isPen)e=Math.min(1,Math.max(.15,t.rawP));else{const a=Math.max(t.t-P.t,1),n=Math.hypot(t.cx-P.cx,t.cy-P.cy)/a;e=1-.8*Math.min(n/1.4,1),e+=.1*(Math.random()-.5)}return T+=(e-T)*(t.isPen?.5:.22),T=Math.min(1,Math.max(.15,T)),T}(e),r>.5){const t=Math.atan2(l,o);if(null===z)z=t,S=1;else{let e=t-z;for(;e>Math.PI;)e-=2*Math.PI;for(;e<-Math.PI;)e+=2*Math.PI;z+=.45*e,S=Math.max(0,.75*S+.25*(1-Math.min(1,3.2*Math.abs(e))))}}const s=n.spacing(t.size);let i=C;for(;i<=r;){const a=0===r?0:i/r;try{n.stamp(c,P.x+o*a,P.y+l*a,t.size,P.p+(e.p-P.p)*a)}catch{}i+=s}C=i-r,P=e}const $=new Map;let O=null;s.addEventListener("touchstart",t=>t.preventDefault(),{passive:!1}),s.addEventListener("touchmove",t=>t.preventDefault(),{passive:!1});let N=null,U=null,Y=null,W=!1,j=null,X=null;function F(t,e){t.beginPath(),t.moveTo(e[0].x,e[0].y);for(let a=1;a<e.length;a++)t.lineTo(e[a].x,e[a].y);t.closePath()}function G(){var e,a;(c.clearRect(0,0,t.w,t.h),N.length<2)||(c.save(),F(c,N),c.fillStyle="rgba(91,108,255,0.1)",c.fill(),a=N,(e=c).lineWidth=2,e.setLineDash([8,6]),e.strokeStyle="rgba(0,0,0,0.6)",F(e,a),e.stroke(),e.lineDashOffset=7,e.strokeStyle="rgba(255,255,255,0.9)",e.stroke(),c.restore())}function K(t){const e=U;return{x:e.rx+(t.x-e.bx)*e.rw/e.bw,y:e.ry+(t.y-e.by)*e.rh/e.bh}}function H(){const e=s.getBoundingClientRect();return t.w/Math.max(1,e.width)*13}function _(){const t=U,e=t.rx,a=t.ry,n=t.rx+t.rw,o=t.ry+t.rh,l=(e+n)/2,r=(a+o)/2;return{tl:{x:e,y:a},tr:{x:n,y:a},bl:{x:e,y:o},br:{x:n,y:o},t:{x:l,y:a},b:{x:l,y:o},l:{x:e,y:r},r:{x:n,y:r}}}function J(){const e=U;c.clearRect(0,0,t.w,t.h),c.save(),c.translate(e.rx,e.ry),c.scale(e.rw/e.bw,e.rh/e.bh),c.translate(-e.bx,-e.by),c.drawImage(e.canvas,0,0),c.restore(),c.save();const a=K(e.path[0]);c.beginPath(),c.moveTo(a.x,a.y);for(let t=1;t<e.path.length;t++){const a=K(e.path[t]);c.lineTo(a.x,a.y)}c.closePath(),c.lineWidth=1.5,c.setLineDash([7,6]),c.strokeStyle="rgba(255,255,255,0.5)",c.stroke(),c.restore();const n=H(),o=_();c.save(),c.setLineDash([]),c.lineWidth=Math.max(1.2,.1*n),c.strokeStyle="#5b6cff",c.strokeRect(e.rx,e.ry,e.rw,e.rh);for(const t of["tl","tr","bl","br"])c.fillStyle="#fff",c.fillRect(o[t].x-n/2,o[t].y-n/2,n,n),c.strokeRect(o[t].x-n/2,o[t].y-n/2,n,n);for(const t of["t","b","l","r"])c.beginPath(),c.arc(o[t].x,o[t].y,n/2.2,0,2*Math.PI),c.fillStyle="#fff",c.fill(),c.stroke();c.restore()}function Q(){if(N&&(N=null,c.clearRect(0,0,t.w,t.h)),!U)return;const e=t.layers.find(t=>t.id===U.layerId);if(e){const t=e.canvas.getContext("2d"),a=U;t.save(),t.translate(a.rx,a.ry),t.scale(a.rw/a.bw,a.rh/a.bh),t.translate(-a.bx,-a.by),t.drawImage(a.canvas,0,0),t.restore(),Y&&it({layerId:e.id,snap:Y})}U=null,Y=null,W=!1,j=null,c.clearRect(0,0,t.w,t.h),u(),bt()}function V(e){if($.delete(e.pointerId),O)$.size<2&&(O=null);else if("move"!==t.tool)!function(){if(!B)return;B=!1;const e=h();if("eraser"===t.tool)d().restore(),it({layerId:e.id,snap:A}),A=null;else{const a=ct(e),n=d();n.save(),n.globalAlpha=t.alpha,n.drawImage(s,0,0),n.restore(),c.clearRect(0,0,t.w,t.h),s.style.opacity=1,it({layerId:e.id,snap:a})}u(),bt()}();else{if(j)return void(j=null);if(W)return void(W=!1);if(N){let e=1/0,a=1/0,n=-1/0,o=-1/0;for(const t of N)t.x<e&&(e=t.x),t.x>n&&(n=t.x),t.y<a&&(a=t.y),t.y>o&&(o=t.y);const l=N;N=null,n-e>8&&o-a>8&&l.length>4?function(e){const a=h();if(!a)return;Y=ct(a);const n=document.createElement("canvas");n.width=t.w,n.height=t.h;const o=n.getContext("2d");o.save(),F(o,e),o.clip(),o.drawImage(a.canvas,0,0),o.restore();const l=a.canvas.getContext("2d");l.save(),l.globalCompositeOperation="destination-out",F(l,e),l.fill(),l.restore();let r=1/0,c=1/0,i=-1/0,d=-1/0;for(const t of e)t.x<r&&(r=t.x),t.x>i&&(i=t.x),t.y<c&&(c=t.y),t.y>d&&(d=t.y);const m=Math.max(1,i-r),u=Math.max(1,d-c);U={canvas:n,path:e,layerId:a.id,bx:r,by:c,bw:m,bh:u,rx:r,ry:c,rw:m,rh:u},s.style.opacity=1,J(),vt("안쪽 드래그 = 이동 · 모서리 = 비율 유지 · 변 = 자유 조절 · 바깥 탭 = 확정")}(l):(c.clearRect(0,0,t.w,t.h),U&&J())}}}document.addEventListener("visibilitychange",()=>{document.hidden&&Q()}),s.addEventListener("pointerdown",e=>{if(0===e.button||"mouse"!==e.pointerType){if(e.preventDefault(),$.set(e.pointerId,{x:e.clientX,y:e.clientY}),2===$.size){!function(){if(B)if(B=!1,"eraser"===t.tool&&A){const e=d();e.restore(),e.clearRect(0,0,t.w,t.h),e.drawImage(A,0,0),A=null}else c.clearRect(0,0,t.w,t.h),s.style.opacity=1}(),W=!1,j=null,N&&(N=null,c.clearRect(0,0,t.w,t.h),U&&J());const[e,a]=[...$.values()];return void(O={d0:Math.hypot(e.x-a.x,e.y-a.y)||1,z0:g,mx:(e.x+a.x)/2,my:(e.y+a.y)/2})}if(!O){if("eyedrop"===t.tool)return function(e){const a=document.createElement("canvas");a.width=t.w,a.height=t.h;const n=a.getContext("2d");t.ref&&(n.globalAlpha=t.ref.alpha,n.drawImage(l,0,0),n.globalAlpha=1),t.layers.forEach(t=>{t.visible&&n.drawImage(t.canvas,0,0)});const o=Math.min(t.w-1,Math.max(0,Math.round(e.x))),r=Math.min(t.h-1,Math.max(0,Math.round(e.y))),s=n.getImageData(o,r,1,1).data;if(0===s[3])return void vt("빈 곳이에요 — 색이 있는 지점을 눌러주세요");const c="#"+[s[0],s[1],s[2]].map(t=>t.toString(16).padStart(2,"0")).join("");St(c,!0),zt.value=c,kt(Lt),vt(`${c} 색을 가져왔어요`)}(I(e)),void $.delete(e.pointerId);if("move"===t.tool){const t=I(e);try{s.setPointerCapture(e.pointerId)}catch{}if(U){const e=function(t){const e=_(),a=1.7*H();for(const n of["tl","tr","bl","br","t","b","l","r"])if(Math.hypot(t.x-e[n].x,t.y-e[n].y)<=a)return n;return null}(t);if(e)return void(j={h:e,r0:{x:U.rx,y:U.ry,w:U.rw,h:U.rh}});if(function(t){const e=U;return t.x>=e.rx-24&&t.x<=e.rx+e.rw+24&&t.y>=e.ry-24&&t.y<=e.ry+e.rh+24}(t))return W=!0,void(X=t);Q()}return void(N=[t])}try{s.setPointerCapture(e.pointerId)}catch{}D(I(e))}}}),s.addEventListener("pointermove",e=>{if(function(e){if("touch"===e.pointerType||"eyedrop"===t.tool||"move"===t.tool)return void(Z.style.display="none");const a=s.getBoundingClientRect();if(!a.width)return;const n=Math.max(3,t.size*(a.width/t.w));Z.style.display="block",Z.style.width=Z.style.height=n+"px",Z.style.left=e.clientX-n/2+"px",Z.style.top=e.clientY-n/2+"px"}(e),$.has(e.pointerId)&&$.set(e.pointerId,{x:e.clientX,y:e.clientY}),O&&$.size>=2){const[t,e]=[...$.values()],a=Math.hypot(t.x-e.x,t.y-e.y)||1,o=(t.x+e.x)/2,l=(t.y+e.y)/2;return y(O.z0*a/O.d0,o,l),n.scrollLeft-=o-O.mx,n.scrollTop-=l-O.my,O.mx=o,void(O.my=l)}if("move"===t.tool){if(j&&U)return function(t){const e=U,{h:a,r0:n}=j,o=12;if("r"===a)e.rw=Math.max(o,t.x-n.x);else if("l"===a){const a=n.x+n.w;e.rw=Math.max(o,a-t.x),e.rx=a-e.rw}else if("b"===a)e.rh=Math.max(o,t.y-n.y);else if("t"===a){const a=n.y+n.h;e.rh=Math.max(o,a-t.y),e.ry=a-e.rh}else{const l=a.includes("l")?n.x+n.w:n.x,r=a.includes("t")?n.y+n.h:n.y,s=Math.max(.08,(Math.abs(t.x-l)+Math.abs(t.y-r))/(n.w+n.h));e.rw=Math.max(o,n.w*s),e.rh=Math.max(o,n.h*s),e.rx=a.includes("l")?l-e.rw:l,e.ry=a.includes("t")?r-e.rh:r}}(I(e)),void J();if(W&&U){const t=I(e);U.rx+=t.x-X.x,U.ry+=t.y-X.y,X=t,J()}else N&&(N.push(I(e)),G());return}if(!B)return;e.preventDefault();let a=e.getCoalescedEvents?e.getCoalescedEvents():[];a.length||(a=[e]);for(const t of a)q(I(t))}),s.addEventListener("pointerup",V),s.addEventListener("pointercancel",V);const Z=document.getElementById("cursorRing");s.addEventListener("pointerleave",()=>{Z.style.display="none"}),n.addEventListener("wheel",t=>{(t.ctrlKey||t.metaKey)&&(t.preventDefault(),y(g*(t.deltaY<0?1.12:.89),t.clientX,t.clientY))},{passive:!1}),document.getElementById("zoomIn").addEventListener("click",()=>y(1.25*g)),document.getElementById("zoomOut").addEventListener("click",()=>y(g/1.25)),document.getElementById("zoomLabel").addEventListener("click",()=>{g=1,p()});let tt="checker";function et(){a.classList.toggle("bg-black","black"===tt),a.classList.toggle("bg-white","white"===tt),document.querySelectorAll("#bgSeg button").forEach(t=>t.classList.toggle("on",t.dataset.bg===tt))}document.querySelectorAll("#bgSeg button").forEach(t=>t.addEventListener("click",()=>{tt=t.dataset.bg,et(),bt()}));let at=!1;const nt=document.getElementById("guideChk");function ot(t){at=t,nt.checked=t,document.getElementById("guides").style.display=t?"block":"none"}nt.addEventListener("change",()=>{ot(nt.checked),bt()});const lt=12;let rt=[],st=[];function ct(e){const a=document.createElement("canvas");return a.width=t.w,a.height=t.h,a.getContext("2d").drawImage(e.canvas,0,0),a}function it(t){rt.push(t),rt.length>lt&&rt.shift(),st=[],ut()}function ht(e,a){if(Q(),!e.length)return;const n=e.pop(),o=t.layers.find(t=>t.id===n.layerId);if(!o)return void ut();a.push({layerId:o.id,snap:ct(o)});const l=o.canvas.getContext("2d");l.clearRect(0,0,t.w,t.h),l.drawImage(n.snap,0,0),ut(),u(),bt()}const dt=()=>ht(rt,st),mt=()=>ht(st,rt);function ut(){document.getElementById("undoBtn").disabled=!rt.length,document.getElementById("redoBtn").disabled=!st.length}document.getElementById("undoBtn").addEventListener("click",dt),document.getElementById("redoBtn").addEventListener("click",mt),window.addEventListener("keydown",t=>{(t.metaKey||t.ctrlKey)&&("z"===t.key.toLowerCase()&&(t.preventDefault(),t.shiftKey?mt():dt()),"y"===t.key.toLowerCase()&&(t.preventDefault(),mt()),"s"===t.key.toLowerCase()&&(t.preventDefault(),document.getElementById("saveBtn").click()))}),document.getElementById("clearBtn").addEventListener("click",()=>{Q();const e=h();e&&(it({layerId:e.id,snap:ct(e)}),e.canvas.getContext("2d").clearRect(0,0,t.w,t.h),u(),bt(),vt(`${e.name} 비움 — 되돌리기로 복구 가능`))});const ft=document.getElementById("trimChk");ft.addEventListener("change",bt),document.getElementById("saveBtn").addEventListener("click",()=>{Q();let e=function(){const e=document.createElement("canvas");e.width=t.w,e.height=t.h;const a=e.getContext("2d");return t.ref&&t.ref.includeInExport&&(a.save(),a.globalAlpha=t.ref.alpha,a.drawImage(l,0,0),a.restore()),t.layers.forEach(t=>{t.visible&&a.drawImage(t.canvas,0,0)}),e}();const a=function(t,e,a){const n=t.getImageData(0,0,e,a).data;let o=e,l=a,r=-1,s=-1;for(let t=0;t<a;t++){const a=t*e;for(let c=0;c<e;c++)n[4*(a+c)+3]>0&&(c<o&&(o=c),c>r&&(r=c),t<l&&(l=t),t>s&&(s=t))}return r<0?null:{x:o,y:l,w:r-o+1,h:s-l+1}}(e.getContext("2d"),e.width,e.height);if(a){if(ft.checked){const t=24,n=Math.max(0,a.x-t),o=Math.max(0,a.y-t),l=Math.min(e.width-n,a.w+2*t),r=Math.min(e.height-o,a.h+2*t),s=document.createElement("canvas");s.width=l,s.height=r,s.getContext("2d").drawImage(e,n,o,l,r,0,0,l,r),e=s}e.toBlob(async t=>{if(!t)return void vt("저장 실패 — 캔버스가 너무 큽니다");const e=new Date,a=t=>String(t).padStart(2,"0"),n=`skety_${e.getFullYear()}${a(e.getMonth()+1)}${a(e.getDate())}_${a(e.getHours())}${a(e.getMinutes())}${a(e.getSeconds())}.png`,o=matchMedia("(pointer: coarse)").matches,l=new File([t],n,{type:"image/png"});if(o&&navigator.canShare&&navigator.canShare({files:[l]}))try{return await navigator.share({files:[l]}),void vt("공유 시트에서 '이미지 저장'을 누르면 사진앱으로 들어가요")}catch(t){if(t&&"AbortError"===t.name)return}const r=document.createElement("a");r.download=n,r.href=URL.createObjectURL(t),r.click(),setTimeout(()=>URL.revokeObjectURL(r.href),3e3)},"image/png")}else vt("저장할 내용이 없어요")});const gt=document.getElementById("sizeSelect");function pt(t,e){const a=`${t}x${e}`;if(![...gt.options].some(t=>t.value===a)){const n=document.createElement("option");n.value=a,n.textContent=`사용자 지정 · ${t}×${e}`,gt.insertBefore(n,gt.querySelector('option[value="custom"]'))}return a}gt.addEventListener("change",e=>{let a,n;if(Q(),"custom"===e.target.value){if(a=parseInt(prompt("가로 픽셀 (64~4096)",t.w),10),n=a?parseInt(prompt("세로 픽셀 (64~4096)",t.h),10):NaN,!a||!n||a<64||n<64||a>4096||n>4096)return void(gt.value=pt(t.w,t.h));gt.value=pt(a,n)}else[a,n]=e.target.value.split("x").map(Number);f(a,n,!0),rt=[],st=[],ut(),u(),bt()});const yt="skety_autosave_v2";let Mt=null;const xt=document.getElementById("saveState");function vt(t){xt.textContent=t,xt.classList.remove("on")}function bt(){clearTimeout(Mt),vt("저장 중…"),Mt=setTimeout(It,800)}function wt(){if(!t.ref)return null;try{const e=l.toDataURL("image/jpeg",.75);return e.length>2e6?null:{data:e,alpha:t.ref.alpha,includeInExport:t.ref.includeInExport}}catch{return null}}let Et=0;function It(){if(Et>0)Mt=setTimeout(It,500);else try{localStorage.setItem(yt,JSON.stringify({w:t.w,h:t.h,layers:t.layers.map(t=>({name:t.name,visible:t.visible,img:t.canvas.toDataURL("image/png")})),activeIndex:t.layers.findIndex(e=>e.id===t.activeLayer),ref:wt(),tool:t.tool,color:t.color,size:t.size,alpha:t.alpha,trim:ft.checked,bg:tt,guides:at,ts:Date.now()})),xt.textContent="✓ 임시저장됨",xt.classList.add("on")}catch(t){vt(t&&"QuotaExceededError"===t.name?"임시저장 실패 (용량 초과)":"이 환경에선 임시저장이 꺼져 있어요")}}let Lt="pencil";function kt(e){"move"===t.tool&&"move"!==e&&Q(),"eyedrop"!==t.tool&&t.tool!==e&&(Lt=t.tool),t.tool=e,document.querySelectorAll(".tool").forEach(t=>t.classList.toggle("active",t.dataset.tool===e)),s.style.cursor="eyedrop"===e||"move"===e?"crosshair":"none";const a=!!document.querySelector('#extraGrid .tool[data-tool="'+e+'"]'),n=document.querySelector('#toolTabs button[data-tab="'+(a?"extra":"basic")+'"]');n&&!n.classList.contains("on")&&n.click()}document.getElementById("toolGrid").addEventListener("click",t=>{const e=t.target.closest(".tool");e&&kt(e.dataset.tool)}),document.getElementById("extraGrid").addEventListener("click",t=>{const e=t.target.closest(".tool");e&&kt(e.dataset.tool)}),document.querySelectorAll("#toolTabs button").forEach(t=>t.addEventListener("click",()=>{document.querySelectorAll("#toolTabs button").forEach(e=>e.classList.toggle("on",e===t)),document.getElementById("toolGrid").style.display="basic"===t.dataset.tab?"":"none",document.getElementById("extraGrid").style.display="extra"===t.dataset.tab?"":"none"}));const Bt=document.getElementById("sizeRange"),Pt=document.getElementById("sizeOut");Bt.addEventListener("input",()=>{t.size=+Bt.value,Pt.textContent=Bt.value});const Ct=document.getElementById("alphaRange"),At=document.getElementById("alphaOut");Ct.addEventListener("input",()=>{t.alpha=+Ct.value/100,At.textContent=Ct.value+"%"});const Rt=document.getElementById("swatches");["#ffffff","#1a1a1a","#ff5252","#ff9f43","#ffd84d","#7ed957","#4dc9ff","#5b7fff","#b970ff","#ff7bd5","#9aa5b5","#8d6e63"].forEach(t=>{const e=document.createElement("div");e.className="swatch",e.style.background=t,e.dataset.color=t,e.addEventListener("click",()=>St(t)),Rt.appendChild(e)});const zt=document.getElementById("colorPicker");function St(e,a){t.color=e;const n=document.getElementById("mbColorDot");n&&(n.style.background=e),a||(zt.value=7===e.length?e:"#ffffff"),document.querySelectorAll(".swatch").forEach(t=>t.classList.toggle("active",t.dataset.color===e))}zt.addEventListener("input",()=>St(zt.value,!0));const Tt=document.getElementById("mobileBar"),Dt=document.getElementById("sheetScrim"),qt=document.getElementById("tools");function $t(t){qt.dataset.sheet=t||"all",qt.classList.add("open"),Dt.classList.add("show"),qt.scrollTop=0}function Ot(){qt.classList.remove("open"),Dt.classList.remove("show")}Tt.addEventListener("click",e=>{const a=e.target.closest(".tool");if(!a)return;const n="eyedrop"===a.dataset.tool||"move"===a.dataset.tool;t.tool!==a.dataset.tool||n?kt(a.dataset.tool):$t("brush")}),document.getElementById("mbMore").addEventListener("click",()=>qt.classList.contains("open")?Ot():$t("all")),document.getElementById("mbColor").addEventListener("click",()=>$t("color")),Dt.addEventListener("click",Ot);const Nt=t=>{const e=(t.value-t.min)/(t.max-t.min)*100;t.style.setProperty("--fill",e+"%")};function Ut(){document.querySelectorAll("input[type=range]").forEach(Nt)}if(document.querySelectorAll("input[type=range]").forEach(t=>t.addEventListener("input",()=>Nt(t))),!function(){try{const e=localStorage.getItem(yt);if(!e)return!1;const a=JSON.parse(e);if(!(a.layers&&a.layers.length&&a.w&&a.h))return!1;t.w=a.w,t.h=a.h,s.width=a.w,s.height=a.h,l.width=a.w,l.height=a.h,gt.value=pt(a.w,a.h),Et=a.layers.length+(a.ref&&a.ref.data?1:0),a.layers.forEach(t=>{const e=i(t.name);e.visible=!1!==t.visible,e.canvas.style.display=e.visible?"":"none";const a=new Image;a.onload=()=>{e.canvas.getContext("2d").drawImage(a,0,0),u(),Et--},a.onerror=()=>{Et--},a.src=t.img});const n=a.activeIndex>=0&&a.activeIndex<t.layers.length?a.activeIndex:t.layers.length-1;if(t.activeLayer=t.layers[n].id,a.ref&&a.ref.data){const e=new Image;e.onerror=()=>{Et--},e.onload=()=>{Et--,t.ref={img:e,alpha:a.ref.alpha??.4,includeInExport:!!a.ref.includeInExport},x.value=Math.round(100*t.ref.alpha),v.textContent=x.value+"%",b.checked=t.ref.includeInExport,M.classList.add("show"),E()},e.src=a.ref.data}return a.tool&&k[a.tool]&&kt(a.tool),a.color&&St(a.color),a.size&&(t.size=a.size,Bt.value=a.size,Pt.textContent=a.size),a.alpha&&(t.alpha=a.alpha,Ct.value=Math.round(100*a.alpha),At.textContent=Math.round(100*a.alpha)+"%"),a.trim&&(ft.checked=!0),a.bg&&(tt=a.bg,et()),a.guides&&ot(!0),xt.textContent="✓ 이전 그림 불러옴",xt.classList.add("on"),p(),!0}catch(t){return!1}}()){const e=i("레이어 1");t.activeLayer=e.id,f(1920,1080,!1)}St(t.color),kt(t.tool),ut(),u(),Ut(),requestAnimationFrame(()=>{p(),Ut()})})();</script>
+</body>
+</html>
